@@ -34,6 +34,8 @@ import UserProfileModal from '../components/modals/UserProfileModal';
 import EditHallazgoModal from '../components/modals/EditHallazgoModal';
 import CloseHallazgoModal from '../components/modals/CloseHallazgoModal';
 import ReopenHallazgoModal from '../components/modals/ReopenHallazgoModal';
+import HallazgoDetailModal from '../components/modals/HallazgoDetailModal';
+import AdvancedDashboardModal from '../components/modals/AdvancedDashboardModal';
 
 // ✅ Componente de notificaciones
 import NotificationContainer from '../components/common/NotificationContainer';
@@ -72,6 +74,8 @@ const DashboardView = () => {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showUserAdmin, setShowUserAdmin] = useState(false);
   const [showUserProfile, setShowUserProfile] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showAdvancedDashboard, setShowAdvancedDashboard] = useState(false);
   
   // Estado para hallazgos
   const [newHallazgo, setNewHallazgo] = useState(getEmptyHallazgo());
@@ -259,6 +263,13 @@ const DashboardView = () => {
       // ✅ La notificación de error la maneja el interceptor automáticamente
     }
   };
+  const handleViewDetail = (hallazgo) => {
+      setSelectedHallazgo(hallazgo);
+      setShowDetailModal(true);
+  };
+  const handleShowDashboard = () => {
+    setShowAdvancedDashboard(true);
+  };
 
   const handleSaveHallazgo = async () => {
     try {
@@ -311,9 +322,10 @@ const DashboardView = () => {
       {/* Header */}
       <Header 
         currentUser={currentUser}
-        onLogout={onLogout} // ✅ Usar el logout del contexto
+        onLogout={onLogout}
         onShowProfile={() => setShowUserProfile(true)}
         onShowUserAdmin={() => setShowUserAdmin(true)}
+        onShowDashboard={handleShowDashboard} 
         canEditUsers={permissions.canEditUsers}
       />
 
@@ -373,6 +385,7 @@ const DashboardView = () => {
             onClose={handleOpenCloseModal}
             onReopen={handleReopen}
             onDelete={handleDelete}
+            onViewDetail={handleViewDetail}  // ← AGREGAR ESTA LÍNEA
             canEditHallazgo={checkCanEdit}
             canCloseHallazgo={checkCanClose}
             canReopenHallazgo={checkCanReopen}
@@ -463,7 +476,25 @@ const DashboardView = () => {
           onUpdateUser={handleUpdateUserProfile}
         />
       )}
-
+      {showDetailModal && selectedHallazgo && (
+        <HallazgoDetailModal
+          hallazgo={selectedHallazgo}
+          isOpen={showDetailModal}
+          onClose={() => {
+            setShowDetailModal(false);
+            setSelectedHallazgo(null);
+          }}
+        />
+      )}
+      {showAdvancedDashboard && (
+        <AdvancedDashboardModal
+          hallazgos={hallazgos}
+          isOpen={showAdvancedDashboard}
+          onClose={() => setShowAdvancedDashboard(false)}
+          currentUser={currentUser}
+          canViewAll={permissions.canViewAll}
+        />
+      )}
       {/* ✅ Contenedor de notificaciones - Se mostrará en toda la aplicación */}
       <NotificationContainer />
     </div>

@@ -1,22 +1,32 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import removeConsole from 'vite-plugin-remove-console'
 import path from 'path'
 
 export default defineConfig(({ command, mode }) => {
-  const env = loadEnv(mode, process.cwd(), '');
+  const env = loadEnv(mode, process.cwd(), '')
+  const isProdLike = ['production', 'staging'].includes(mode) // 👈 Cambia aquí si solo quieres producción
 
-  console.log('🔧 Vite Config:', {
-    command,
-    mode,
-    apiBaseUrl: env.VITE_API_BASE_URL
-  });
+  if (!isProdLike) {
+    console.log('🔧 Vite Config:', {
+      command,
+      mode,
+      apiBaseUrl: env.VITE_API_BASE_URL
+    })
+  }
 
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [
+      react(),
+      tailwindcss(),
+      isProdLike && removeConsole({
+        external: ['error', 'warn'] // 👈 conserva console.error y warn si quieres
+      })
+    ].filter(Boolean), // 💡 Limpia falsos del array
     define: {
       __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
-      __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+      __BUILD_TIME__: JSON.stringify(new Date().toISOString())
     },
     resolve: {
       alias: {
@@ -65,6 +75,6 @@ export default defineConfig(({ command, mode }) => {
     optimizeDeps: {
       include: ['react', 'react-dom', 'react-router-dom', 'axios', 'lucide-react']
     },
-    base: mode === 'production' ? '/LxHallazgosFront/' : '/',
-  };
-});
+    base: mode === 'production' ? '/LxHallazgosFront/' : '/'
+  }
+})

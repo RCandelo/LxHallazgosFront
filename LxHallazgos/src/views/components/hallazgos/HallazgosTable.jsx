@@ -1,7 +1,6 @@
 import React from 'react';
-import { Edit3, X, RotateCcw } from 'lucide-react';
 import { canEditHallazgo, canViewAllHallazgos, canReopenHallazgo } from '../../../utils/permissions';
-
+import { Edit3, X, RotateCcw, Eye } from 'lucide-react';
 const HallazgosTable = ({ 
   hallazgos, 
   users, 
@@ -12,6 +11,7 @@ const HallazgosTable = ({
   onClose,
   onReopen,
   onDelete,
+  onViewDetail,
   showNotification,
   canEditHallazgo: checkCanEdit,
   canCloseHallazgo: checkCanClose,
@@ -176,6 +176,14 @@ const HallazgosTable = ({
                   </td>
                   <td className="p-4">
                     <div className="flex space-x-2">
+                      <button
+                        onClick={() => onViewDetail(h)}
+                        className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded-lg text-sm transition-colors flex items-center space-x-1"
+                        title="Ver detalle completo"
+                      >
+                        <Eye className="w-3 h-3" />
+                        <span>Ver</span>
+                      </button>
                       {puedeEditarEste && (
                         <button
                           onClick={() => onEdit(h)}

@@ -1,8 +1,8 @@
 import React from 'react';
-import { Shield } from 'lucide-react';
+import { Shield, BarChart3 } from 'lucide-react';
 import UserMenu from './UserMenu';
 
-const Header = ({ currentUser, onLogout, onShowProfile, onShowUserAdmin, canEditUsers }) => {
+const Header = ({ currentUser, onLogout, onShowProfile, onShowUserAdmin, canEditUsers, onShowDashboard }) => {
   return (
     <div className="bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -36,14 +36,27 @@ const Header = ({ currentUser, onLogout, onShowProfile, onShowUserAdmin, canEdit
             </div>
           </div>
 
-          {/* Menú de usuario */}
-          <UserMenu 
-            currentUser={currentUser}
-            onLogout={onLogout}
-            onShowProfile={onShowProfile}
-            onShowUserAdmin={onShowUserAdmin}
-            canEditUsers={canEditUsers}
-          />
+          {/* Dashboard Button y Menú de usuario */}
+          <div className="flex items-center space-x-4">
+            {/* NUEVO BOTÓN DASHBOARD */}
+            <button
+              onClick={onShowDashboard}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center space-x-2 shadow-sm hover:shadow-md"
+              title="Ver Dashboard Avanzado"
+            >
+              <BarChart3 className="w-4 h-4" />
+              <span className="hidden sm:inline font-medium">Dashboard</span>
+            </button>
+
+            {/* Menú de usuario */}
+            <UserMenu 
+              currentUser={currentUser}
+              onLogout={onLogout}
+              onShowProfile={onShowProfile}
+              onShowUserAdmin={onShowUserAdmin}
+              canEditUsers={canEditUsers}
+            />
+          </div>
         </div>
       </div>
     </div>
