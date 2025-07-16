@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { canEditHallazgo, canViewAllHallazgos, canReopenHallazgo } from '../../../utils/permissions';
-import { Edit3, X, RotateCcw, Eye } from 'lucide-react';
+import { Edit3, X, RotateCcw, Eye, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+
 const HallazgosTable = ({ 
   hallazgos, 
   users, 
@@ -19,6 +20,10 @@ const HallazgosTable = ({
   canDeleteHallazgo: checkCanDelete
 }) => {
   
+  // ✅ ESTADO DE PAGINACIÓN
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(50); // Fijo en 50 elementos
+
   const formatDate = (dateString) => {
     if (!dateString) return '-';
     try {
@@ -33,9 +38,6 @@ const HallazgosTable = ({
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
   };
   
-  // ✅ ELIMINADO: Funciones de filtrado por búsqueda y fecha
-  // Los datos ya vienen filtrados del backend, no necesitamos filtrarlos aquí
-  
   // ✅ SOLO aplicar filtros de permisos de usuario (esto no se hace en backend)
   const filteredHallazgos = hallazgos.filter(h => {
     // ✅ Solo filtro por permisos de visualización
@@ -47,10 +49,79 @@ const HallazgosTable = ({
     return h.usuario_id === currentUser?.id || h.evaluador === currentUser?.nombre;
   });
 
-  // ✅ DEBUG - Mostrar información de filtrado
+  // ✅ CÁLCULOS DE PAGINACIÓN
+  const totalItems = filteredHallazgos.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentHallazgos = filteredHallazgos.slice(startIndex, endIndex);
+
+  // ✅ FUNCIONES DE NAVEGACIÓN
+  const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const goToFirstPage = () => setCurrentPage(1);
+  const goToLastPage = () => setCurrentPage(totalPages);
+  const goToPreviousPage = () => goToPage(currentPage - 1);
+  const goToNextPage = () => goToPage(currentPage + 1);
+
+  // ✅ RESETEAR PÁGINA CUANDO CAMBIAN LOS FILTROS
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [filters, hallazgos.length]);
+
+  // ✅ GENERAR NÚMEROS DE PÁGINA PARA MOSTRAR
+  const getPageNumbers = useMemo(() => {
+    const pages = [];
+    const maxVisiblePages = 7;
+    
+    if (totalPages <= maxVisiblePages) {
+      // Mostrar todas las páginas si son pocas
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Lógica para mostrar páginas con elipsis
+      if (currentPage <= 4) {
+        // Cerca del inicio
+        for (let i = 1; i <= 5; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 3) {
+        // Cerca del final
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 4; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        // En el medio
+        pages.push(1);
+        pages.push('...');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+    
+    return pages;
+  }, [currentPage, totalPages]);
+
+  // ✅ DEBUG - Mostrar información de filtrado y paginación
   console.log('📊 HallazgosTable DEBUG:', {
     totalRecibidos: hallazgos.length,
     despuesDePermisos: filteredHallazgos.length,
+    paginaActual: currentPage,
+    totalPaginas: totalPages,
+    mostrandoDesde: startIndex + 1,
+    mostrandoHasta: Math.min(endIndex, totalItems),
     filtrosActivos: filters,
     permisos: permissions,
     usuario: currentUser?.nombre
@@ -66,7 +137,6 @@ const HallazgosTable = ({
               : 'No tienes permisos para ver estos hallazgos'
             }
           </div>
-          
         </div>
       </div>
     );
@@ -74,7 +144,7 @@ const HallazgosTable = ({
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-      {/* ✅ Información de estado de filtros */}
+      {/* ✅ Información de estado de filtros y paginación */}
       <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
         <div className="flex justify-between items-center">
           <h3 className="font-semibold text-gray-800">
@@ -104,6 +174,18 @@ const HallazgosTable = ({
             )}
           </div>
         </div>
+
+        {/* ✅ Información de paginación */}
+        {totalPages > 1 && (
+          <div className="flex justify-between items-center mt-2 text-sm text-gray-600">
+            <span>
+              Mostrando {startIndex + 1} - {Math.min(endIndex, totalItems)} de {totalItems} resultados
+            </span>
+            <span>
+              Página {currentPage} de {totalPages}
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="overflow-x-auto">
@@ -122,7 +204,7 @@ const HallazgosTable = ({
             </tr>
           </thead>
           <tbody>
-            {filteredHallazgos.map((h) => {
+            {currentHallazgos.map((h) => {
               const evaluadorUser = users.find(u => u.nombre === h.evaluador);
               const puedeEditarEste = checkCanEdit ? checkCanEdit(h) : canEditHallazgo(currentUser, h);
               const puedeReabrirEste = checkCanReopen ? checkCanReopen(h) : canReopenHallazgo(currentUser, h);
@@ -232,6 +314,102 @@ const HallazgosTable = ({
           </tbody>
         </table>
       </div>
+
+      {/* ✅ CONTROLES DE PAGINACIÓN */}
+      {totalPages > 1 && (
+        <div className="bg-gray-50 px-4 py-3 border-t border-gray-200">
+          <div className="flex items-center justify-between">
+            {/* Información de página */}
+            <div className="flex items-center space-x-2 text-sm text-gray-600">
+              <span>
+                Página {currentPage} de {totalPages} 
+                ({totalItems} elementos total)
+              </span>
+            </div>
+
+            {/* Controles de navegación */}
+            <div className="flex items-center space-x-1">
+              {/* Ir al inicio */}
+              <button
+                onClick={goToFirstPage}
+                disabled={currentPage === 1}
+                className={`p-2 rounded-lg ${
+                  currentPage === 1
+                    ? 'text-gray-400 cursor-not-allowed'
+                    : 'text-gray-600 hover:bg-gray-200 hover:text-gray-800'
+                } transition-colors`}
+                title="Primera página"
+              >
+                <ChevronsLeft className="w-4 h-4" />
+              </button>
+
+              {/* Página anterior */}
+              <button
+                onClick={goToPreviousPage}
+                disabled={currentPage === 1}
+                className={`p-2 rounded-lg ${
+                  currentPage === 1
+                    ? 'text-gray-400 cursor-not-allowed'
+                    : 'text-gray-600 hover:bg-gray-200 hover:text-gray-800'
+                } transition-colors`}
+                title="Página anterior"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              {/* Números de página */}
+              <div className="flex items-center space-x-1 mx-2">
+                {getPageNumbers.map((page, index) => (
+                  <React.Fragment key={index}>
+                    {page === '...' ? (
+                      <span className="px-3 py-1 text-gray-500">...</span>
+                    ) : (
+                      <button
+                        onClick={() => goToPage(page)}
+                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                          page === currentPage
+                            ? 'bg-blue-500 text-white'
+                            : 'text-gray-600 hover:bg-gray-200 hover:text-gray-800'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+
+              {/* Página siguiente */}
+              <button
+                onClick={goToNextPage}
+                disabled={currentPage === totalPages}
+                className={`p-2 rounded-lg ${
+                  currentPage === totalPages
+                    ? 'text-gray-400 cursor-not-allowed'
+                    : 'text-gray-600 hover:bg-gray-200 hover:text-gray-800'
+                } transition-colors`}
+                title="Página siguiente"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+
+              {/* Ir al final */}
+              <button
+                onClick={goToLastPage}
+                disabled={currentPage === totalPages}
+                className={`p-2 rounded-lg ${
+                  currentPage === totalPages
+                    ? 'text-gray-400 cursor-not-allowed'
+                    : 'text-gray-600 hover:bg-gray-200 hover:text-gray-800'
+                } transition-colors`}
+                title="Última página"
+              >
+                <ChevronsRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
