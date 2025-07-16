@@ -358,7 +358,7 @@ export const useHallazgos = ({
       if (!currentUser || !hallazgo) return false;
       
       // Admin siempre puede editar
-      if (currentUser.rol === 'admin') return true;
+      if (currentUser.rol === 'admin' || currentUser.rol === 'super_admin') return true;
       
       // Usuario puede editar si tiene permiso y es su hallazgo
       if (authService.canEdit() && hallazgo.usuario_id === currentUser.id) {
@@ -392,7 +392,7 @@ export const useHallazgos = ({
       if (hallazgo.estado === 'cerrado') return false;
       
       // Admin siempre puede cerrar
-      if (currentUser.rol === 'admin') return true;
+      if (currentUser.rol === 'admin' || currentUser.rol === 'super_admin') return true;
       
       // Usuario puede cerrar su propio hallazgo
       return hallazgo.usuario_id === currentUser.id;
@@ -412,7 +412,7 @@ export const useHallazgos = ({
       if (hallazgo.estado !== 'cerrado') return false;
       
       // Admin siempre puede reabrir
-      if (currentUser.rol === 'admin') return true;
+      if (currentUser.rol === 'admin' || currentUser.rol === 'super_admin') return true;
       
       // Usuario puede reabrir su propio hallazgo o si lo cerró él
       return hallazgo.usuario_id === currentUser.id || hallazgo.cerrado_por === currentUser.id;
